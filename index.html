@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>74-Day Research Study Neon Timeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: linear-gradient(rgba(10, 10, 10, 0.9), rgba(10, 10, 10, 0.9)), url('https://i.ibb.co/gMG94wtX/img-1-1755904322607.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background-color: #0891b2; /* Cyan-600 */
+            box-shadow: 0 0 8px #0891b2, 0 0 12px #0891b2;
+        }
+
+        .timeline-card {
+            border: 2px solid #0891b2;
+            box-shadow: 0 0 15px rgba(8, 145, 178, 0.5), inset 0 0 10px rgba(8, 145, 178, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .timeline-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 0 25px rgba(8, 145, 178, 0.8), inset 0 0 15px rgba(8, 145, 178, 0.5);
+        }
+
+        .day-marker {
+            position: absolute;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #0a0a0a;
+            border: 4px solid #0891b2;
+            z-index: 10;
+            box-shadow: 0 0 10px #0891b2;
+        }
+
+        .timeline-card-left .day-marker {
+            left: auto;
+            right: -14px;
+            transform: translateX(0);
+        }
+
+        .timeline-card-right .day-marker {
+            left: -14px;
+            transform: translateX(0);
+        }
+
+        .header-glow {
+            font-family: 'Orbitron', sans-serif;
+            color: #f0f9ff; /* light cyan */
+            text-shadow: 0 0 5px #0891b2, 0 0 10px #0891b2, 0 0 15px #0891b2;
+        }
+
+        .topic-glow {
+            color: #ec4899; /* Pink-500 */
+            text-shadow: 0 0 4px #ec4899;
+        }
+        
+        @media (max-width: 768px) {
+            .timeline-container::before {
+                left: 18px;
+                transform: translateX(0);
+            }
+            .timeline-item {
+                width: 100%;
+                padding-left: 50px;
+                padding-right: 15px;
+                margin-bottom: 30px;
+            }
+            .timeline-card-left, .timeline-card-right {
+                width: 100%;
+                margin-left: 0;
+            }
+            .day-marker {
+                left: 18px;
+                transform: translateX(-50%);
+            }
+            .timeline-card-left .day-marker, .timeline-card-right .day-marker {
+                left: -32px;
+                right: auto;
+                transform: translateX(0);
+            }
+        }
+
+        /* Calendar popup styles */
+        .calendar-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1e293b;
+            border: 2px solid #0891b2;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(8, 145, 178, 0.7);
+            display: none;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .calendar-popup.active {
+            display: block;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+
+        .calendar-day {
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .calendar-day.active-day {
+            cursor: pointer;
+            background-color: rgba(8, 145, 178, 0.3);
+        }
+
+        .calendar-day.active-day:hover {
+            background-color: #0891b2;
+        }
+
+        .calendar-day.other-month {
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="text-slate-300">
+
+    <div class="container mx-auto px-4 py-12">
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold header-glow">RS Research Journey</h1>
+            <p class="mt-4 text-xl text-cyan-200">Team : Systemic Review 7</p>
+            <p class="mt-2 text-lg text-cyan-400">By Mohamed Esmat</p>
+            <button id="goToDateBtn" class="mt-6 px-6 py-2 border-2 border-cyan-500 text-cyan-300 font-semibold rounded-lg hover:bg-cyan-500 hover:text-black transition-colors duration-300 shadow-[0_0_10px_rgba(8,145,178,0.8)]">
+                Go to Date
+            </button>
+        </header>
+
+        <div id="timeline" class="relative timeline-container mx-auto">
+            <!-- Timeline items will be injected here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Calendar popup -->
+    <div id="overlay" class="overlay"></div>
+    <div id="calendarPopup" class="calendar-popup">
+        <div class="calendar-header">
+            <button id="prevMonth" class="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-700">&lt;</button>
+            <h3 id="currentMonth" class="text-xl font-semibold"></h3>
+            <button id="nextMonth" class="px-3 py-1 bg-cyan-600 rounded hover:bg-cyan-700">&gt;</button>
+        </div>
+        <div class="calendar-grid">
+            <div class="font-semibold">Sun</div>
+            <div class="font-semibold">Mon</div>
+            <div class="font-semibold">Tue</div>
+            <div class="font-semibold">Wed</div>
+            <div class="font-semibold">Thu</div>
+            <div class="font-semibold">Fri</div>
+            <div class="font-semibold">Sat</div>
+        </div>
+        <div id="calendarDays" class="calendar-grid">
+            <!-- Calendar days will be injected here by JavaScript -->
+        </div>
+        <div class="mt-4 flex justify-end">
+            <button id="closeCalendar" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const playlistLinks = {
+            "Research Fundamentals for Beginners by Dr. Nizar": "https://www.youtube.com/playlist?list=PLuDFktFSWZ_XVufo7h9bDIerKoo7s3ouA",
+            "Scientific Research Basics & Pathways by MFM-SRP": "https://www.youtube.com/playlist?list=PLf5xd2J2Wb3EJgftqreSEA5SEhy96SYEE",
+            "How to read a scientific research paper by TRUST Research Center": "https://www.youtube.com/playlist?list=PLmy2a-SGA8D6ThsyNiDq6OuOCtZStHxxQ",
+            "Basics of Academic writing by Dr. Mohammad Helmy": "https://www.youtube.com/playlist?list=PLgJmbz1SOqfYPCdxj58Vga-X0poW5Tdno",
+            "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy": "https://www.youtube.com/playlist?list=PLpoVQMupFRTT643PQ7n_ymuLl4lOKXd78",
+            "Writing in Science by Stanford University": "https://m.youtube.com/playlist?list=PL7MSLdv6U956caUxMGr7c0sBD7ZIP-Nie",
+            "Best Collection: Search Strategy": "https://www.youtube.com/playlist?list=PLxWL4WNyGae5OIxtkl0LZ-K1lvhP1m1Vh",
+            "Best Collection: Screening": "https://www.youtube.com/watch?v=7YCPAkNuUVM&feature=youtu.be",
+            "Best Collection: Data Extraction": "https://www.youtube.com/playlist?list=PLpCgt81286MFWisdO-2s8HlAGqZt2Grw4",
+            "Best Collection: Data Extraction Sheets": "https://www.youtube.com/playlist?list=PLpCgt81286MGg7QE9gvkqnYt9Pe3h87z2",
+            "Best Collection: ROB Assessment": "https://www.youtube.com/playlist?list=PLxWL4WNyGae4MUbQrJs7ZHgLXBc03oOPX",
+            "Best Collection: Meta-analysis (Gebreel)": "https://www.youtube.com/playlist?list=PLyWjmYOG9sP6lkk0J7F94wMvBJnKMaRy3",
+            "A Complete Course on SR&MA by Dr. Anas Z. Nourelden": "https://www.youtube.com/playlist?list=PLpCgt81286MHuuS01hskYfLVNS4r8_I75",
+            "SR&MA by Dr. Mohammad Abd-ElGawad": "https://www.youtube.com/playlist?list=PLxWL4WNyGae5vZjF6IIopwOjAGSEGp6Jk",
+            "SR&MA by Dr. Mohammad Elnaggar": "https://www.youtube.com/playlist?list=PL9GrBMsvivVWMywC_8aSJqU6RdwLmbVmC",
+            "SR&MA Full Course by Medical Research Empowerment": "https://www.youtube.com/playlist?list=PLeSSMkVhgrtkALqbKwIQuFos2SwQyp7wv",
+            "Cochrane Interactive Learning Course": "https://www.cochrane.org/learn/courses-and-resources/interactive-learning",
+            "Dr. Manar Ahmad Kamal": "https://youtu.be/362Agj3BTAk?si=LI1tGiYkLMHqGP0c",
+            "Rx Clinico Dr. Nada Shaban": "https://youtu.be/ako123fWBVQ?si=bs3EJ6dxT7juPuQZ",
+            "Student Clubs Unit by Dr. Fares Elrakaf": "https://youtu.be/gEHhL0PR9Os?si=3NiqxStx2Im2cHn_",
+            "Writing the Research Proposal by TSRA team": "https://youtu.be/DKnQRTYJKkM",
+            "Writing the Methods section by TSRA team": "https://youtu.be/ONByqNCP9zU?si=pHCBx2ykv4P76NuR",
+            "Data Collection & Sampling by TSRA team": "https://youtu.be/qGL-9xRmEdA",
+            "Applied Medical Statistics Course by Dr. Mohammad Elshrief": "https://www.youtube.com/playlist?list=PLnruVGowQilf3qPLK-Jhz2Suc06DBH5Cz",
+            "SPSS Made Easy": "https://t.me/SPSS_Made_Easy"
+        };
+
+        const timelineData = [
+             { day: 1, topic: "Scientific Research Basics", duration: "1h 42m", tasks: [{ course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #1 - What is a Research Article? (8m 15s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #2 - Difference between Research Article and Magazine Article (11m 6s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #3 - Why read Research Articles? (10m 45s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #4 - Types of Research Articles (10m 15s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #5 - What is an Abstract? (11m 17s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #6 - Example Abstract Explained (7m 2s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #7 - How the Purpose affects Conclusion? (7m 34s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #8 - Financial Disclosures and Validation Studies (12m 8s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #9 - Should I read the WHOLE article? No! (11m 29s)" }, { course: "Research Fundamentals for Beginners by Dr. Nizar", title: "Epi #10 - Why read the METHODS? (8m 43s)" }]},
+            { day: 2, topic: "Scientific Research Basics", duration: "2h 29m", tasks: [{ course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC'211 Research cycle and question I Dr.Khaled Emara (36m 17s)" }, { course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC'211 2-Study Design I Dr.Ibrahim Elkabash (1h 3m 50s)" }, { course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC'21 13- Searching Databases I Dr Huda yousry (49m 13s)" }]},
+            { day: 3, topic: "Scientific Research Basics", duration: "3h 32m", tasks: [{ course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC'21 1 4-Statistics part_11 Dr Magdy Mostafa (1h 51m 39s)" }, { course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC'21 | 5-Statistics part_21 Dr Magdy Mostafa (1h 43m 6s)" }, { course: "How to read a scientific research paper by TRUST Research Center", title: "How to read and interpret a scientific paper (Part 1) (14m 30s)" }, { course: "How to read a scientific research paper by TRUST Research Center", title: "How to read and interpret a scientific paper (Part 2): Title, abstract and introduction (17m 6s)" }, { course: "How to read a scientific research paper by TRUST Research Center", title: "How to read and interpret a scientific paper (Part 3): Methods (25m 35s)" }]},
+            { day: 4, topic: "Scientific Research Basics", duration: "3h 51m", tasks: [{ course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC '21 16- Scientific writing I Dr. Mohamed Alaa (1h 40m 44s)" }, { course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC0211 7- Research Ethics I Dr. Hany sleem (46m 32s)" }, { course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC '211 8- Publishing I Dr.Mohamed EL-Shemy (50m 11s)" }, { course: "Scientific Research Basics & Pathways by MFM-SRP", title: "RBC '2119-Future Research career I dr. Abdelrahman Abu-shouk (44m 32s)" }]},
+            { day: 5, topic: "Scientific Writing", duration: "4h 3m", tasks: [{ course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Course Intro | كورس أساسيات الكتابة العلمية .1 (11m 37s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Leco The scientific research process | كورس أساسيات الكتابة العلمية 2 (1h 15m 24s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Lec1 : Introduction to scientific communication | كورس أساسيات الكتابة العلمية 3. (1h 8m 12s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Lec Dissecting the Research Article | كورس أساسيات الكتابة العلمية .4. (1h 37m 28s)" }]},
+            { day: 6, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 7, topic: "Scientific Writing", duration: "4h 20m", tasks: [{ course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Le The Introduction | كورس أساسيات الكتابة العلمية 5.. (51m 35s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Lec3 Illustrations in a scientific article | كورس أساسيات الكتابة العلمية 6. (1h 7m 16s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "Lec4: Materials and Method | كورس أساسيات الكتابة العلمية 7 (58m 49s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "The results and discussion | كورس أساسيات الكتابة العلمية 8. Le (1h 8m 57s)" }, { course: "Basics of Academic writing by Dr. Mohammad Helmy", title: "كورس أساسيات الكتابة العلمية | Lec7 Conclusion, references and other contents (1h 13m 33s)" }]},
+            { day: 8, topic: "Scientific Writing", duration: "3h 48m", tasks: [{ course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "1- Idea of research: Series of \"How to write a scientific paper\" (27m 12s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "2- Title page & abstract sections: Series of \"How to write a scientific paper\" (40m 3s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "3- Section of Introduction: series of \"How to write a scientific paper\" (16m 19s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "4- Method section: Series of \"How to write a scientific paper\" (24m 23s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "Results section, 1st part: Series of (How to write a scientific paper?) (25m 24s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "6- Results section, 2nd part: Series of \"How to write a scientific paper\" (13m 55s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "7- Practical example for critical appraisal of Introduction, method & results sections (24m 14s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "8- Discussion section: Series of \"How to write a scientific paper\" (29m 57s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "9- References section, 2ry citation, quotation: Series of \"How to write a scientific paper?\" (41m 36s)" }]},
+            { day: 9, topic: "Scientific Writing", duration: "4h 10m", tasks: [{ course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "10- ORCID, its importance: Series of \"How to write a scientific paper\" (3m 21s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "11-Ethical- & Availability of data statements on title page: \"How to write a scientific paper?\" (15m 51s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "12- websites helping to review literature: Series of \"How to write a scientific paper?\" (8m 51s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "13- Title, running title, Keywords & MESH terms: Series of \"How to write a scientific paper\" (14m 10s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "14- Criteria of authorship & order of authors, ORCID, affiliations: How to write a scientific paper (31m 3s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "الفيديو 15 سلسلة كيفية كتابة الورقة البحثية الرد على أسئلة الزملاء من الباحثين وأعضاء التدريس 1515 (16m 48s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "16- 2ry sources, Quotations: Series of \"How to write a scientific paper\" (15m 45s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "17- General stages of writing a paper, General rules for language: \"How to write a scientific paper\" (9m 16s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "الرسالة والصراع بين عامل الوقت والاتقان الفيديو 18 في سلسلة كيفية كتابة الورقة البحثية للنشر 18.. (9m 44s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "19- Manuscript submission & instructions to authors: \"How to write a scientific paper\" (11m 44s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "20- suggesting reviewers: \"How to write a scientific paper\" (8m 38s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "21- Advantages of Publons academy website: \"How to write a scientific paper\" (18m 58s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "22- Suggesting reviewers using Jane website: Series of \"How to write a scientific paper\" (3m 45s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "23 publishing preprint version of a manuscript: Series of \"How to write a scientific paper\" (9m 4s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "اختر الجار قبل الدار والرفيق قبل الطريق (قواعد عامة للفريق البحثي) سلسلة كتابة الورقة البحثية 2424 (5m 41s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "25- \"How to write a scientific paper?\" Part 1 - Nile university webinar (33m 43s)" }]},
+            { day: 10, topic: "Scientific Writing", duration: "2h 59m", tasks: [{ course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "26- \"How to write a scientific paper?\" Part 1b - Nile university webinar (1h 20m 21s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "Example for critical appraisal of studies: ivermectin for COVID19 (33m 51s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "28 Editorial cycle after submission of a manuscript - Types & causes of rejection (11m 23s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "29 Rejection is not the end of story: What to do? \"Series of how to write a scientific paper\" (14m 52s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "30 appeal letter & a real example (10m 5s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "31.31 Response of authors to comments of reviewers: Take care! \"how to write a scientific paper?\" (11m 38s)" }, { course: "How to write and publish a scientific research paper by Dr. Mohammad Elsheemy", title: "مقدمة سلسلة كيفية كتابة البحث ونشره 32... (1m 45s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 1.1 (12m 35s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 1.2 (7m 54s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 1.3 (8m 16s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 1.4 (15m 25s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 1.5 (4m 42s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 1.6 (9m 54s)" }]},
+            { day: 11, topic: "Scientific Writing", duration: "3h 36m", tasks: [{ course: "Writing in Science by Stanford University", title: "Sainani SciWrite 2.1 (15m 23s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 2.2 (8m 43s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 2.3 (5m 10s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 2.4 (12m 9s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 2.5 (29m 17s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 2.6 (10m 28s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 3.1 (41m)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 3.2 (9m 27s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 3.3 (7m 55s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 3.4 (24m 18s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 3.5 (21m 2s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 3.6 (11m 48s)" }]},
+            { day: 12, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 13, topic: "Scientific Writing", duration: "3h 52m", tasks: [{ course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.1 (16m 55s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.2 (10m 18s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.3 (15m 30s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.4 (9m 36s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.5 (8m 18s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.6 (19m 35s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 4.7 (13m 44s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 5.1 (41m 49s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 5.2 (15m 27s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 5.3 (10m 22s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 5.4 (28m 53s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 5.5 (22m 27s)" }]},
+            { day: 14, topic: "Scientific Writing", duration: "3h 48m", tasks: [{ course: "Writing in Science by Stanford University", title: "Sainani SciWrite 5.6 (12m 14s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.1 (28m 25s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.2 (10m 2s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.3 (17m 49s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.4 (14m 51s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.5 (27m 25s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.6 (23m 10s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 6.7 (2m 57s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 7.1 (23m 19s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 7.2 (10m 48s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 7.3 (8m 51s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 7.4 (10m 52s)" }]},
+            { day: 15, topic: "Scientific Writing", duration: "3h 15m", tasks: [{ course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 7.5 (22m 4s)" }, { course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 7.6 (17m 56s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 8.1 (28m 48s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 8.2 (16m 2s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 8.3 (22m 51s)" }, { course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 8.4 (14m 36s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite 8.6 (2m 59s)" }, { course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 1 (24m 18s)" }, { course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 2 (20m 34s)" }, { course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 3 (23m 3s)" }, { course: "Writing in Science by Stanford University", title: "SciWrite Demo Edit 4 (20m 44s)" }, { course: "Writing in Science by Stanford University", title: "Sainani SciWrite Unit1 Mod1 new (11m 26s)" }]},
+            { day: 16, topic: "Systematic Reviews & Meta-analysis", duration: "3h 39m", tasks: [{ course: "Best Collection: Search Strategy", title: "Search strategy level one (1h 16m 43s)" }, { course: "Best Collection: Search Strategy", title: "Search strategy level two (32m 32s)" }, { course: "Best Collection: Search Strategy", title: "Brief on Study Design & Research Question (19m 58s)" }, { course: "Best Collection: Search Strategy", title: "Designing The Search Strategy (35m 37s)" }, { course: "Best Collection: Search Strategy", title: "Databases & Egyptian Knowledge Bank & Helsebiblioteket (54m 40s)" }]},
+            { day: 17, topic: "Systematic Reviews & Meta-analysis", duration: "3h 21m", tasks: [{ course: "Best Collection: Screening", title: "Screening titles and abstracts, then full-texts (2h 14m 55s)" }, { course: "Best Collection: Data Extraction", title: "Overview about systematic review steps and some notes about data extraction. (21m 10s)" }, { course: "Best Collection: Data Extraction", title: "Introduction into data extraction, baseline and summary extraction with important notes. (45m 30s)" }]},
+            { day: 18, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 19, topic: "Systematic Reviews & Meta-analysis", duration: "4h 53m", tasks: [{ course: "Best Collection: Data Extraction", title: "Extraction of dichotomous and continuous outcomes & (mean & SD change) calculation. (1h 31m 23s)" }, { course: "Best Collection: Data Extraction", title: "Conversions التحويلات in extraction of continuous outcomes & practice using my sheet. (1h 36m 28s)" }, { course: "Best Collection: Data Extraction", title: "Data extraction from graphs for most data types & practice using web plot digitzer. (1h 11m 5s)" }, { course: "Best Collection: Data Extraction", title: "Data Extraction part 1 - Summary and Baseline (33m 22s)" }, { course: "Best Collection: Data Extraction", title: "Data Extraction - Part 2 - Outcome sheet (29m 23s)" }, { course: "Best Collection: Data Extraction", title: "Data Extraction - Part 3 - Figure and Conversions (32m 39s)" }]},
+            { day: 20, topic: "Systematic Reviews & Meta-analysis", duration: "3h 16m", tasks: [{ course: "Best Collection: Data Extraction Sheets", title: "How to format a summary sheet for data extraction in systematic review studies? (45m 6s)" }, { course: "Best Collection: Data Extraction Sheets", title: "How to format a baseline sheet for data extraction in systematic review studies? (41m 34s)" }, { course: "Best Collection: Data Extraction Sheets", title: "How to format the outcomes sheet for data extraction in systematic review studies? (1h 49m 50s)" }]},
+            { day: 21, topic: "Systematic Reviews & Meta-analysis", duration: "5h 16m", tasks: [{ course: "Best Collection: ROB Assessment", title: "Quality assessment part 1 (ROB 1&2, selection bias) (45m 25s)" }, { course: "Best Collection: ROB Assessment", title: "Quality assessment part 2 (ROB 1&2, blinding) (57m 17s)" }, { course: "Best Collection: ROB Assessment", title: "Quality assessment part 3 (ROB 1&2, incomplete outcome and reporting bias) (1h 4m 25s)" }, { course: "Best Collection: ROB Assessment", title: "Quality assessment, Newcastle-Ottawa Scale (NOS) for observational studies (zoom meeting) (2h 9m 38s)" }]},
+            { day: 22, topic: "Systematic Reviews & Meta-analysis", duration: "3h 53m", tasks: [{ course: "Best Collection: Meta-analysis (Gebreel)", title: "Meta analysis via RevMan Part 1 (15m 16s)" }, { course: "Best Collection: Meta-analysis (Gebreel)", title: "Meta analysis via RevMan Part 2 (36m 39s)" }, { course: "Best Collection: Meta-analysis (Gebreel)", title: "Meta analysis via RevMan Part 3 (38m 59s)" }, { course: "Best Collection: Meta-analysis (Gebreel)", title: "Meta analysis via RevMan Part 4 (38m 59s)" }, { course: "Best Collection: Meta-analysis (Gebreel)", title: "Meta analysis via RevMan Part 5 (39m 16s)" }, { course: "Best Collection: Meta-analysis (Gebreel)", title: "Meta Analysis via RevMan part 6 (Last part) (49m 42s)" }, { course: "Best Collection: Meta-analysis (Gebreel)", title: "My First Conference Presentation (Mohamed Gbreel) DIA Egypt (14m 14s)" }]},
+            { day: 23, topic: "Systematic Reviews & Meta-analysis", duration: "4h 2m", tasks: [{ course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Meta-analysis part one (zoom meeting) (35m 3s)", link: "https://www.youtube.com/watch?v=bptkDLo954w" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Meta-analysis part two (zoom meeting) (36m 54s)", link: "https://www.youtube.com/watch?v=uzvXXxfPP0I" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Meta-analysis part three (zoom meeting) (38m 17s)", link: "https://www.youtube.com/watch?v=9JiN1YIApkc&feature=youtu.be" }, { course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "Introduction to systematic reviews, PICO, how to check the validity. (1h 45m 8s)" }, { course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "2,3,4,5 Inclusion and exclusion criteria, Protocol, Searching databases, Extraction of their result (1h 27m 20s)" }]},
+            { day: 24, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 25, topic: "Systematic Reviews & Meta-analysis", duration: "4h 16m", tasks: [{ course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "Screening titles and abstracts, then full-texts. (2h 14m 56s)" }, { course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "Data extraction of summery, baseline, and outcomes, with their tricks. (2h 1m 46s)" }]},
+            { day: 26, topic: "Systematic Reviews & Meta-analysis", duration: "4h 13m", tasks: [{ course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "Risk of bias assessment (ROB) (1h 26m 16s)" }, { course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "9,10. Meta analysis, Scientific writing (35m 13s)" }, { course: "A Complete Course on SR&MA by Dr. Anas Z. Nourelden", title: "What should you do after the course? (11m 45s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Search strategy level one (1h 16m 43s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Search strategy level two (32m 32s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Data collection using endnote (35m 3s)" }]},
+            { day: 27, topic: "Systematic Reviews & Meta-analysis", duration: "3h 22m", tasks: [{ course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "How to get the full text of a specific study (16m 21s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Graph digitalizer (18m 2s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Meta-analysis part one (zoom meeting) (35m 3s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Meta-analysis part two (zoom meeting) (36m 54s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Meta-analysis part three (zoom meeting) (38m 17s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Quality assessment part 1 (ROB 1&2, selection bias) (45m 25s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Quality assessment part 2 (ROB 1&2, blinding) (57m 17s)" }]},
+            { day: 28, topic: "Systematic Reviews & Meta-analysis", duration: "3h 52m", tasks: [{ course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Quality assessment part 3 (ROB 1&2, incomplete outcome and reporting bias) (1h 4m 25s)" }, { course: "SR&MA by Dr. Mohammad Abd-ElGawad", title: "Quality assessment, Newcastle-Ottawa Scale (NOS) for observational studies (zoom meeting) (2h 9m 39s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Scientific Research Outline (10m 9s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Types of Academic Reviews (13m 20s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Question | Part 1 (11m 1s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Question | Part 2 (8m 22s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Questions Examples (8m 11s)" }]},
+            { day: 29, topic: "Systematic Reviews & Meta-analysis", duration: "4h 5m", tasks: [{ course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Search Strategy (12m 51s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Searching Databases (PubMed, Scopus and Web of Science) (14m 40s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Screening (filter search results) (11m 56s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Results | PRISMA flowchart | شرح معايير البريزما (11m 44s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Data Extraction (9m 17s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Register your Systematic Review Protocol on PROSPERO (17m 49s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Quality Assessment | Systematic Review & Meta-analysis (9m 46s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review Data Extraction 2 (16m 42s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Data Analysis | Systematic Review & Meta-Analysis (13m 1s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Easy way to find Journals for your paper! (13m 2s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Full-Text Screening using Rayyan Al! (10m 29s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Systematic Review and Meta-Analysis: 6 Key Questions Answered! (10m 49s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Expert Guide to Risk of Bias Assessment: (13m 41s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "الجديد لعمل الميتا اناليسيز RevMan Web شرح موقع 19 (11m 40s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "A Beginner's Roadmap to Writing DTA Systematic Reviews تعليمات واضحة للمبتدئين (17m 7s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "ازاي بقدر احمل أي بحث بشكل مجاني بالكامل | ٤ طرق مختلفة لتحميل أي بحث علمي مجانا 21. (12m 1s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Google Notebook LM | أفضل أداة ذكاء اصطناعي للبحث العلمي 22 (11m 21s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "ازاي الريفيو بتاعك يتقبل للنشر بسهولة؟ | نصائح قبل البدء في الكتابة 23 (8m 23s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Forest Plot Easily Explained!! شرح مبسط باللغة العربية (10m 18s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Drawing Forest Plot using RevMan! (10m 26s)" }, { course: "SR&MA by Dr. Mohammad Elnaggar", title: "Top 5 Skills Every Researcher Must Have (10m 48s)" }]},
+            { day: 30, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 31, topic: "Systematic Reviews & Meta-analysis", duration: "3h 45m", tasks: [{ course: "SR&MA Full Course by Medical Research Empowerment", title: "Introduction to EBM, Best Research Evidence & PICO [SRMA 1] (22m 44s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Introduction To Systematic Review & Meta Analysis [SRMA 2] (1h 5m 33s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Searching Databases & Exporting Data to Excel [SRMA 3] (16m 43s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Idea Generation, & Checking validity [SRMA 4] (9m 43s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Building a Search Strategy and Inclusion & Exclusion Criteria [SRMA 5] (19m 29s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Search Strategy Translation And Checking Idea Validity - A Practical Guide [SRMA 6] (1h 21m 46s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Systematic Review Protocol Registration [SRMA 7] (12m 4s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Exporting Search Results from Different Databases To Excel Sheet Using Zotero [SRMA 8] (36m 4s)" }]},
+            { day: 32, topic: "Systematic Reviews & Meta-analysis", duration: "3h 5m", tasks: [{ course: "SR&MA Full Course by Medical Research Empowerment", title: "Exporting Search Results from Different Databases To Excel Sheet Using EndNote [SEMA 9] (22m 6s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "How To Screen (Title & Abstract - Full Text)? [SRMA 10] (1h 37m 29s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Data Extraction Process for Systematic Review (Part 1) [SRMA 11] (1h 1m 44s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Data Extraction - Variables & Extracting Data from Charts using Webplotdegitizer [SRMA 12] (1h 4m 29s)" }]},
+            { day: 33, topic: "Systematic Reviews & Meta-analysis", duration: "3h 5m", tasks: [{ course: "SR&MA Full Course by Medical Research Empowerment", title: "Data Extraction: Conversions and Combinations (Part 3) [SRMA 13] (58m 24s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Data Extraction: A Practical Guide (Part 4) [SRMA 14] (1h 7m 53s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Quality Assessment: An Introduction To ROB and RCT Studies (Part 1) (1h 9m 20s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Quality Assessment: ROB.2 Tool and a Practical Guide (Part 2) (49m 4s)" }]},
+            { day: 34, topic: "Systematic Reviews & Meta-analysis", duration: "3h 20m", tasks: [{ course: "SR&MA Full Course by Medical Research Empowerment", title: "Quality Assessment: ROB.2 Tool and a Practical Guide (The rest of the session) (Part 2) [SRMA 16] (11m 13s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Quality Assessment Tools for Observational Research [SRMA 17] (31m 56s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Meta Analysis (Part 1): The Basics [SRMA 18] (1h 31m 20s)" }, { course: "SR&MA Full Course by Medical Research Empowerment", title: "Meta Analysis (Part 2): The Statistical Methods [SRMA 19] (1h 37m 21s)" }]},
+            { day: 35, topic: "Systematic Reviews & Meta-analysis", duration: "4h 27m", tasks: [{ course: "SR&MA Full Course by Medical Research Empowerment", title: "Meta Analysis (Part 3): Forest Plot & Funnel Plot - A Practical Guide [SRMA 20] (57m 6s)" }, { course: "Cochrane Interactive Learning Course", title: "Module 1: Introduction to conducting systematic reviews (1h)" }, { course: "Cochrane Interactive Learning Course", title: "Module 2: Writing the review protocol (1h)" }, { course: "Cochrane Interactive Learning Course", title: "Module 3: Searching for studies (1h 30m)" }]},
+            { day: 36, topic: "Systematic Reviews & Meta-analysis", duration: "6h 10m", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 4: Selecting studies and collecting data (1h 30m)" }, { course: "Cochrane Interactive Learning Course", title: "Module 5: Introduction to risk of bias (2h)" }, { course: "Cochrane Interactive Learning Course", title: "Module 6: Analysing the data (2h 40m)" }]},
+            { day: 37, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 38, topic: "Systematic Reviews & Meta-analysis", duration: "2h", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 7: Interpreting the findings (2h)" }] },
+            { day: 39, topic: "Systematic Reviews & Meta-analysis", duration: "2h", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 8: Reporting the review (2h)" }] },
+            { day: 40, topic: "Systematic Reviews & Meta-analysis", duration: "1h", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 9: Introduction to health economics (1h)" }] },
+            { day: 41, topic: "Systematic Reviews & Meta-analysis", duration: "2h", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 10: Network meta-analysis (2h)" }] },
+            { day: 42, topic: "Systematic Reviews & Meta-analysis", duration: "1h 15m", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 11: Health equity in systematic reviews (1h 15m)" }] },
+            { day: 43, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 44, topic: "Systematic Reviews & Meta-analysis", duration: "2h", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 12: Introduction to qualitative evidence synthesis (2h)" }] },
+            { day: 45, topic: "Systematic Reviews & Meta-analysis", duration: "2h", tasks: [{ course: "Cochrane Interactive Learning Course", title: "Module 13: Rapid reviews (2h)" }] },
+            { day: 46, topic: "Cross-Sectional Studies", duration: "1h 45m", tasks: [{ course: "Dr. Manar Ahmad Kamal", title: "Cross-Sectional Studies (3h 10m 45s) - Watch first 1h 45m" }] },
+            { day: 47, topic: "Cross-Sectional Studies", duration: "1h 26m", tasks: [{ course: "Dr. Manar Ahmad Kamal", title: "Cross-Sectional Studies (Continue from yesterday) (1h 25m 45s)" }] },
+            { day: 48, topic: "Cross-Sectional Studies", duration: "2h 36m", tasks: [{ course: "Rx Clinico Dr. Nada Shaban", title: "Cross-Sectional Studies (11m 11s)" }, { course: "Student Clubs Unit by Dr. Fares Elrakaf", title: "Cross-Sectional Studies (1h 10m 21s)" }, { course: "Writing the Research Proposal by TSRA team", title: "Writing the Research Proposal (20m 44s)" }, { course: "Writing the Methods section by TSRA team", title: "Writing the Methods section (54m 38s)" }]},
+            { day: 49, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 50, topic: "Cross-Sectional Studies & Statistics", duration: "1h 29m", tasks: [{ course: "Data Collection & Sampling by TSRA team", title: "Data Collection & Sampling (17m 31s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "1- Introduction (41m 15s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "2- Types of data variables (30m 23s)" }]},
+            { day: 51, topic: "Statistics", duration: "2h 11m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "3- Data Entry (39m 42s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "4- Descriptive Statistics (part A) (56m 42s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "5- Descriptive Statistics (part B) (35m 16s)" }]},
+            { day: 52, topic: "Statistics", duration: "2h 22m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "6- Descriptive Statistics (part C, application) (21m 46s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "7- Tabular presentation of data (28m 30s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "8- Graphical presentation of data (part A) (29m 20s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "9- Graphical presentation of data (part B, application) (1h 2m 10s)" }]},
+            { day: 53, topic: "Statistics", duration: "1h 54m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "10- Hypothesis testing (null and alternative hypotheses) (34m 9s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "11-Type I and type II errors (32m 4s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "12-P-value (47m 48s)" }]},
+            { day: 54, topic: "Statistics", duration: "1h 41m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "13-Confidence Interval (1h 8m 9s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "14-Incidence and Prevalence (32m 55s)" }]},
+            { day: 55, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 56, topic: "Statistics", duration: "1h 34m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "15-Observational and interventional studies (7m)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "16-Cross-sectional studies (41m 10s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "17-Case-control Studies (45m 56s)" }]},
+            { day: 57, topic: "Statistics", duration: "1h 34m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "18- Cohort Studies (32m 40s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "19-Randomized Controlled Trials (RCTs), Part A (1h 1m 34s)" }]},
+            { day: 58, topic: "Statistics", duration: "1h 25m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "20- RCTs, Part B: (Blinding and Randomization) (48m 6s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "21-How to do Randomization in RTCS (5m 29s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "22- RCTs part C: Design and analysis (31m 21s)" }]},
+            { day: 59, topic: "Statistics", duration: "1h 53m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "23- Choosing the suitable statistical test (43m 51s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "24- Parametric and Non-parametric tests (7m 44s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "25- Independent t test (1h 1m 18s)" }]},
+            { day: 60, topic: "Statistics", duration: "1h 45m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "26-Mann-Whitney test (23m 2s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "27-Paired t test (24m 29s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "28- Wilcoxon Signed Rank test (17m 24s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "29-One-way ANOVA (39m 41s)" }]},
+            { day: 61, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 62, topic: "Statistics", duration: "1h 48m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "30-Kruskal-Wallis test (20m 40s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "31- Repeated measures ANOVA (34m 26s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "32- Friedman test (15m 48s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "33- Two-way ANOVA (36m 59s)" }]},
+            { day: 63, topic: "Statistics", duration: "1h 24m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "34- Relative Risk and Odds Ratio (26m 2s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "35- Chi Square test and Fisher's Exact test (42m 38s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "36- McNemar test (15m 5s)" }]},
+            { day: 64, topic: "Statistics", duration: "1h 39m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "37-Correlation (40m 16s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "38- What is regression & Types of regression (16m 25s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "39- Simple linear regression (42m 34s)" }]},
+            { day: 65, topic: "Statistics", duration: "1h 49m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "40- Multiple linear regression (43m 48s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "41- Model Building in Regression (26m 19s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "42- Checking Assumptions of Linear Regression (39m 4s)" }]},
+            { day: 66, topic: "Statistics", duration: "2h 5m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "43- Simple Logistic Regression (44m 47s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "44- Multiple Logistic Regression (14m 33s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "45- Diagnostic tests (Sensitivity, Specificity, PPV, NPV) (32m 34s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "46-ROC curve (33m 54s)" }]},
+            { day: 67, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 68, topic: "Statistics", duration: "2h 41m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "47- Logistic regression as a dignostic (prediction) tool and developing Nomogram (37m 36s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "48- Bland-Altman plot (18m 38s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "49- Kappa Agreement (16m 29s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "50- Survival Analysis and Cox Regression (1h 28m 49s)" }]},
+            { day: 69, topic: "Statistics", duration: "1h 53m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "Questionnaire: Design, Validity, Reliability, Aanalysis (Watch first 1h 53m)" }] },
+            { day: 70, topic: "Statistics", duration: "1h 53m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "Questionnaire (Continue from yesterday) (21m 21s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "Sample size calculation (Watch first 1h 32m)" }]},
+            { day: 71, topic: "Statistics", duration: "2h 11m", tasks: [{ course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "Sample size calculation (Continue from yesterday) (34m 44s)" }, { course: "Applied Medical Statistics Course by Dr. Mohammad Elshrief", title: "Meta-analysis (1h 36m 43s)" }]},
+            { day: 72, topic: "Statistics", duration: "1h 40m", tasks: [{ course: "SPSS Made Easy", title: "Video 1: Analysis basic (19m 40s)" }, { course: "SPSS Made Easy", title: "Video 2: Coding in excel (10m)" }, { course: "SPSS Made Easy", title: "Video 3: Data entry in SPSS (7m 20s)" }, { course: "SPSS Made Easy", title: "Video 4: Select cases (2m 31s)" }, { course: "SPSS Made Easy", title: "Video 5: Grouping (4m 43s)" }, { course: "SPSS Made Easy", title: "Video 6: Frequency (7m 16s)" }, { course: "SPSS Made Easy", title: "Video 7: Measures of Central Tendency (6m 31s)" }, { course: "SPSS Made Easy", title: "Video 8: Chi square (14m 46s)" }, { course: "SPSS Made Easy", title: "Video 9: Person correlation (5m 40s)" }, { course: "SPSS Made Easy", title: "Video 10: Independent T test (9m 32s)" }, { course: "SPSS Made Easy", title: "Video 11: One way Anova (10m 4s)" }, { course: "SPSS Made Easy", title: "Video 12: Paired T test (6m 10s)" }]},
+            { day: 73, topic: "Rest Day", duration: "0h 0m", tasks: [] },
+            { day: 74, topic: "Statistics", duration: "1h 30m", tasks: [{ course: "SPSS Made Easy", title: "Video 13: Mann whitney Kruskal wallis Spearman (20m 2s)" }, { course: "SPSS Made Easy", title: "Video 14: Logistic regression (24m 37s)" }, { course: "SPSS Made Easy", title: "Video 1.A: Reliability analysis Cornbach Alpha (7m 26s)" }, { course: "SPSS Made Easy", title: "Video 15: Kaplan Meier (11m 6s)" }, { course: "SPSS Made Easy", title: "Video 16: Cox regression (5m 45s)" }, { course: "SPSS Made Easy", title: "Video 1.B: Power Analysis (22m 56s)" }]}
+        ];
+
+        function generateTimeline() {
+            const timelineEl = document.getElementById('timeline');
+            const today = new Date();
+
+            let content = '';
+
+            timelineData.forEach((item, index) => {
+                const futureDate = new Date(today);
+                futureDate.setDate(today.getDate() + item.day - 1);
+                const dateString = futureDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const isLeft = index % 2 === 0;
+                
+                const tasksHtml = item.tasks.length > 0 ? item.tasks.map(task => {
+                    const link = task.link || playlistLinks[task.course];
+                    const courseHtml = link 
+                        ? `<a href="${link}" target="_blank" rel="noopener noreferrer" class="text-sm text-cyan-400 hover:underline hover:text-cyan-200">${task.course}</a>`
+                        : `<p class="text-sm text-cyan-400">${task.course}</p>`;
+                    
+                    return `
+                        <li class="mb-2">
+                            <p class="font-semibold text-slate-200">${task.title}</p>
+                            ${courseHtml}
+                        </li>
+                    `;
+                }).join('') : '<p class="text-slate-400">No tasks for today. Enjoy your break!</p>';
+
+                content += `
+                <div class="timeline-item mb-8 flex justify-between items-center w-full ${isLeft ? 'flex-row-reverse' : ''}" id="day-${item.day}">
+                    <div class="hidden md:block w-5/12"></div>
+                    <div class="w-full md:w-7/12 relative ${isLeft ? 'timeline-card-left' : 'timeline-card-right'}">
+                        <div class="day-marker"></div>
+                        <div class="timeline-card bg-gray-900/50 backdrop-blur-sm rounded-lg p-6">
+                            <div class="flex justify-between items-baseline mb-4">
+                                <h3 class="font-bold text-2xl text-white">Day ${item.day}</h3>
+                                <span class="text-sm font-semibold text-pink-400 topic-glow">${item.duration}</span>
+                            </div>
+                            <p class="text-sm text-cyan-300 mb-1">${dateString}</p>
+                            <h4 class="font-bold text-xl mb-4 text-white">${item.topic}</h4>
+                            <ul class="list-disc list-inside text-slate-300 space-y-2">
+                                ${tasksHtml}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            timelineEl.innerHTML = content;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generateTimeline();
+
+            const goToDateBtn = document.getElementById('goToDateBtn');
+            const calendarPopup = document.getElementById('calendarPopup');
+            const overlay = document.getElementById('overlay');
+            const closeCalendar = document.getElementById('closeCalendar');
+            const prevMonth = document.getElementById('prevMonth');
+            const nextMonth = document.getElementById('nextMonth');
+            const currentMonthElement = document.getElementById('currentMonth');
+            const calendarDays = document.getElementById('calendarDays');
+            
+            let currentDate = new Date();
+            const startDate = new Date();
+            startDate.setHours(0,0,0,0);
+
+            function showCalendar() {
+                calendarPopup.classList.add('active');
+                overlay.classList.add('active');
+                renderCalendar(currentDate);
+            }
+            
+            function hideCalendar() {
+                calendarPopup.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+            
+            function renderCalendar(date) {
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                
+                currentMonthElement.textContent = new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                
+                calendarDays.innerHTML = '';
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const prevLastDay = new Date(year, month, 0);
+                const prevDaysCount = firstDay.getDay();
+
+                for (let i = prevDaysCount; i > 0; i--) {
+                    const day = prevLastDay.getDate() - i + 1;
+                    calendarDays.appendChild(createDayElement(day, 'other-month', new Date(year, month - 1, day)));
+                }
+                
+                for (let i = 1; i <= lastDay.getDate(); i++) {
+                    calendarDays.appendChild(createDayElement(i, '', new Date(year, month, i)));
+                }
+                
+                const totalDays = prevDaysCount + lastDay.getDate();
+                const nextDaysCount = (7 - (totalDays % 7)) % 7;
+
+                for (let i = 1; i <= nextDaysCount; i++) {
+                    calendarDays.appendChild(createDayElement(i, 'other-month', new Date(year, month + 1, i)));
+                }
+            }
+            
+            function createDayElement(day, className, date) {
+                const dayElement = document.createElement('div');
+                dayElement.className = `calendar-day ${className}`;
+                dayElement.textContent = day;
+                
+                const timeDiff = date.getTime() - startDate.getTime();
+                const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24)) + 1;
+                
+                if (dayDiff >= 1 && dayDiff <= 74) {
+                    dayElement.classList.add('active-day');
+                    dayElement.addEventListener('click', function() {
+                        const targetElement = document.getElementById(`day-${dayDiff}`);
+                        if (targetElement) {
+                            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            hideCalendar();
+                        }
+                    });
+                }
+                
+                return dayElement;
+            }
+            
+            goToDateBtn.addEventListener('click', showCalendar);
+            closeCalendar.addEventListener('click', hideCalendar);
+            overlay.addEventListener('click', hideCalendar);
+            
+            prevMonth.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar(currentDate);
+            });
+            
+            nextMonth.addEventListener('click', function() {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar(currentDate);
+            });
+        });
+    </script>
+</body>
+</html>
